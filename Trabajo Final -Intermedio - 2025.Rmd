@@ -1,10 +1,24 @@
 ------------------------------------------------------------------------
-  
-  ## ***"Trabajo final Hackaton intermedio 2025"***
-  
-  ##  Autor: "Esteban Gentile"
-  
-  Cargamos la base de datos con la que vamos a utilizar
+
+\## ***"Trabajo final Hackaton intermedio 2025"***
+
+\## Autor: "Esteban Gentile"
+
+Objetivo:
+
+Aplicar los conceptos vistos durante las jornadas y aplicarlos a datos propios.
+
+Tema seleccionado:
+
+Análisis de índice de abundancia relativa de juveniles de corvina rubia en la Bahia Samborombón, período 2016-2023, en función a parametros ambientales como salinidad y temperatura de fondo.
+
+Introducción:
+
+En función del estudio realizado sobre las fluctuaciones de reclutamiento de la corvina rubia a partir de las estimaciones de índices anuales de abundancia relativa de juveniles. se utilizaron datos de captura de individuos de edad 1 y ambientales provenientes de seis campañas dirigidas a la evaluación de la especie en el área costera de la Bahía Samborombón, realizado a borde de embarcaciones menores del INIDEP durante las estaciones calidad entre febrero de 2016 y abril de 2023. Este informe tiene el objetivo de mostrar la distribución espacial XXXX
+
+
+
+Cargamos la base de datos con la que vamos a utilizar
 
 ```{r}
 "*********************************** librerias utiles *****************************"
@@ -19,7 +33,6 @@ library(ggplot2)
 library(sf)
 library(units)
 ```
-
 
 ```{r}
 # Cargar datos
