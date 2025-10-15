@@ -1,0 +1,65 @@
+------------------------------------------------------------------------
+  
+  ## ***"Trabajo final Hackaton intermedio 2025"***
+  
+  ##  Autor: "Esteban Gentile"
+  
+  Cargamos la base de datos con la que vamos a utilizar
+
+```{r}
+"*********************************** librerias utiles *****************************"
+library(dplyr)
+library(readxl)
+library(spdep)   # datos espaciales
+library(sf)      # datos espaciales
+library(spatialreg) # modelos SAR/SEM
+library(vioplot)   # gráficos de violín
+library(corrplot)  # gráficos de correlación 
+library(ggplot2)
+library(sf)
+library(units)
+```
+
+
+```{r}
+# Cargar datos
+dm =  read_excel("Datos juveniles corvina.xlsx")
+
+#definimos las variables con las que vamos a trabajar y generamos un nuevo data frame
+
+anio       =as.numeric(dm$Anio)
+lon        =as.numeric(dm$lon)
+lat        =as.numeric(dm$lat)
+tf         =as.numeric(dm$tf)
+sf         =as.numeric(dm$sf)
+capcorvkg  =as.numeric(dm$cap_cor_kg)
+indicejun  =as.numeric(dm$abun_miles_ind_mn2)
+
+dm=data.frame(anio,lon,lat,tf,sf,capcorvkg,indicejun)
+```
+
+Para cada una de las variables que tenemos en cuenta vamos a presentar los datos mediante un hostograma y un boxplot
+
+```{r}
+
+
+for (i in 1:length(colnames(dm))){
+  par(mfrow = c(1,2))   # 1 fila y 2 columnas
+  n <- names(dm)[i]
+  # Histograma
+  hist(dm[, i], main = "", xlab = n,  col = "lightblue")
+  
+  # Boxplot
+  boxplot(dm[, i], main = "", horizontal = TRUE, col = "plum")
+}
+
+```
+
+### Ahora creamos una figura o gráfico
+
+En el espacio entre { } es donde se puede poner el título de la figura, que será la que aparezca debajo de esta en el documento del informe.
+
+```{r grafico, out.width = '100%', fig.align = 'center', fig.cap = 'Horas de presencia de embarcaciones por pais y tipo.'}
+
+
+```
