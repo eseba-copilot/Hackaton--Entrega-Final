@@ -1,78 +1,243 @@
+---
+---
+---
+
 ------------------------------------------------------------------------
 
 \## ***"Trabajo final Hackaton intermedio 2025"***
 
+![](images/clipboard-1278338794.png){width="141"}
+
 \## Autor: "Esteban Gentile"
 
-Objetivo:
+***Objetivo***
 
 Aplicar los conceptos vistos durante las jornadas y aplicarlos a datos propios.
 
-Tema seleccionado:
+***Tema seleccionado***
 
-Análisis de índice de abundancia relativa de juveniles de corvina rubia en la Bahia Samborombón, período 2016-2023, en función a parametros ambientales como salinidad y temperatura de fondo.
+Análisis de índice de abundancia relativa de juveniles de corvina rubia en la Bahia Samborombón, período 2016-2025, en función a parametros ambientales como salinidad y temperatura de fondo.
 
-Introducción:
+***Introducción***
 
-En función del estudio realizado sobre las fluctuaciones de reclutamiento de la corvina rubia a partir de las estimaciones de índices anuales de abundancia relativa de juveniles. se utilizaron datos de captura de individuos de edad 1 y ambientales provenientes de seis campañas dirigidas a la evaluación de la especie en el área costera de la Bahía Samborombón, realizado a borde de embarcaciones menores del INIDEP durante las estaciones calidad entre febrero de 2016 y abril de 2023. Este informe tiene el objetivo de mostrar la distribución espacial XXXX
+En función del estudio realizado sobre las fluctuaciones de reclutamiento de la corvina rubia a partir de las estimaciones de índices anuales de abundancia relativa de juveniles. se utilizaron datos de captura de individuos de edad 1 y ambientales provenientes de seis campañas dirigidas a la evaluación de la especie en el área costera de la Bahía Samborombón, realizado a borde de embarcaciones menores del INIDEP durante las estaciones calidad entre febrero de 2016 y abril de 2025. Observandose en este ultimo año una distribucion espacial notablemente diferente a lo presentado con anterioridad. Este informe tiene el objetivo de mostrar la distribución espacial del indice de abundancia de juveniles en la costa de la Bahía y analizar la anomalia presentada en 2025 con realcion a factores ambientales como salinidad y temperatura de fondo.
 
+***Desarrollo de codigo***
 
+1 - Cargamos las librerias que vamos a utilizar en el Script
 
-Cargamos la base de datos con la que vamos a utilizar
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+packages = c("sf", "spdep", "spatialreg", "vioplot", "corrplot", "ggplot2")
 
-```{r}
-"*********************************** librerias utiles *****************************"
+#"Librerias necesarias"
 library(dplyr)
 library(readxl)
-library(spdep)   # datos espaciales
-library(sf)      # datos espaciales
+library(spdep)      # datos espaciales
+library(sf)         # datos espaciales
 library(spatialreg) # modelos SAR/SEM
-library(vioplot)   # gráficos de violín
-library(corrplot)  # gráficos de correlación 
-library(ggplot2)
+library(vioplot)    # gráficos de violín
+library(corrplot)   # gráficos de correlación 
+library(ggplot2)    
 library(sf)
 library(units)
 ```
+
+```{r}
+#"Librerias necesarias"
+#library(dplyr)
+#library(readxl)
+#library(spdep)      # datos espaciales
+#library(sf)         # datos espaciales
+#library(spatialreg) # modelos SAR/SEM
+#library(vioplot)    # gráficos de violín
+#library(corrplot)   # gráficos de correlación 
+#library(ggplot2)    
+#library(sf)
+#library(units)
+
+```
+
+2- Leemos nuestra base de datos subida el repositrorio previamente y disponemos los datos especificos a utilizar en un dataframe (dm)
 
 ```{r}
 # Cargar datos
 dm =  read_excel("Datos juveniles corvina.xlsx")
 
 #definimos las variables con las que vamos a trabajar y generamos un nuevo data frame
-
 anio       =as.numeric(dm$Anio)
 lon        =as.numeric(dm$lon)
 lat        =as.numeric(dm$lat)
 tf         =as.numeric(dm$tf)
 sf         =as.numeric(dm$sf)
 capcorvkg  =as.numeric(dm$cap_cor_kg)
-indicejun  =as.numeric(dm$abun_miles_ind_mn2)
+indicejuveniles  =as.numeric(dm$abun_miles_ind_mn2)
 
-dm=data.frame(anio,lon,lat,tf,sf,capcorvkg,indicejun)
+dm=data.frame(anio,lon,lat,tf,sf,capcorvkg,indicejuveniles)
 ```
 
-Para cada una de las variables que tenemos en cuenta vamos a presentar los datos mediante un hostograma y un boxplot
+3- Lectura y analisís previo de las variables a analizar Para cada una de las variables que tenemos en cuenta vamos a presentar los datos mediante tabla, histograma y un boxplot
+
+```{r}
+for (i in 1:length(colnames(dm))) {
+  n <- names(dm)[i]
+  par(mfrow = c(1,2))  # 1 fila y 2 columnas
+  
+  # Histograma
+  hist(dm[, i], main = "Histograma", xlab = n, col = "lightblue")
+  
+  # Boxplot
+  boxplot(dm[, i], main = "Boxplot", horizontal = TRUE, col = "plum")
+  
+  # Título general centrado arriba de ambos
+  mtext(paste("Variable:", n), outer = TRUE, cex = 1.5, line = -2)
+}
+```
+
+4- Ahora analizaremos la corralación que existen entre el indice de abundancia y las variables de interes: Salinidad de Fondo (SF) / Temperatura de fondo (TF) / captura
 
 ```{r}
 
-
-for (i in 1:length(colnames(dm))){
-  par(mfrow = c(1,2))   # 1 fila y 2 columnas
-  n <- names(dm)[i]
-  # Histograma
-  hist(dm[, i], main = "", xlab = n,  col = "lightblue")
-  
-  # Boxplot
-  boxplot(dm[, i], main = "", horizontal = TRUE, col = "plum")
-}
+(cor_mat = cor(dm[,4:7])) # Matriz de correlaciones
 
 ```
 
-### Ahora creamos una figura o gráfico
+5 - Presentamos los resultados de la correlación mediante gráficos de dispersión y corrplot
 
-En el espacio entre { } es donde se puede poner el título de la figura, que será la que aparezca debajo de esta en el documento del informe.
+```{r}
 
-```{r grafico, out.width = '100%', fig.align = 'center', fig.cap = 'Horas de presencia de embarcaciones por pais y tipo.'}
+# Gráficos de dispersión
+pairs(dm[,4:7], pch=19, col="tan")
+
+library(corrplot)
+# Visualización con corrplot
+corrplot(cor_mat, method = "circle", type = "upper",
+         col = colorRampPalette(c("orangered", "white", "mediumseagreen"))(200),
+         tl.col = "darkslateblue", tl.srt = 45, 
+         addCoef.col = "midnightblue", number.cex = 0.8)
+```
+
+El gráfico presentado muestra la matriz de correlación entre las variables temperatura de fondo (TF), salinidad de fondo (SF), captura de corvina en kilogramos (capcorvkg) e índice de juveniles. Se observa una correlación positiva muy fuerte entre la captura de corvina y el índice de juveniles (r = 0,89), lo que sugiere que mayores valores de uno tienden a asociarse con incrementos del otro. En cambio, las variables ambientales (TF y SF) presentan correlaciones muy bajas con las restantes, lo que indica una relación débil o prácticamente inexistente entre la temperatura o salinidad de fondo y el indice de abundancia relataiva.
+
+***Ahora mostraremos la distribución temporal espacial del indice de abundancia***
+
+a - Debemos convertir las coordenadas de nuestra base de datos a coordenadas que puedan ser leidas por los paquetes de Rstudio
+
+```{r}
+# Convertir a objeto espacial (CRS WGS84)
+dm_sp = st_as_sf(dm, coords = c("lon", "lat"), crs = 4326)
+```
+
+b- Previsualizo la disposición de las coordenadas de los indice de masas agrupados previo a vincularlas con la porcion del mapa mundial
+
+```{r}
+#Gráfico simple. El gradiente de color va de menor a mayor altura
+plot(dm_sp["indicejuveniles"], main = "indicejuveniles", pch=18, axes=T)
+
+```
+
+c- Ahora necesitamos facetear la presentación en gráficos anuales donde se observe la variación del indice de abundacia espacial
+
+```{r}
+# Aseguramos que 'anio' sea un factor
+dm$anio <- as.factor(dm$anio)
+
+# Mapa base (data.frame con polígonos del mundo)
+world <- map_data("world")
+
+# Definir límites del mapa
+xlim <- c(min(dm$lon) - 0.2, max(dm$lon) + 0.2)
+ylim <- c(min(dm$lat) - 0.2, max(dm$lat) + 0.2)
+
+# Gráfico facetado
+ggplot() +
+  geom_polygon(data = world, aes(x = long, y = lat, group = group),
+               fill = "gray90", colour = "gray70") +
+  geom_point(data = dm,
+             aes(x = lon, y = lat, colour = indicejuveniles),
+             size =3) +
+  scale_color_gradient(low = "lightblue", high = "darkred") +
+  coord_quickmap(xlim = xlim, ylim = ylim, expand = FALSE) +
+  facet_wrap(~ anio) +
+  labs(title = "Distribución del índice por año",
+       x = "Longitud", y = "Latitud", colour = "indicejuvenieles") +
+  theme_minimal()
+
+```
+
+El gráfico muestra la distribución espacial del índice de abundancia de juveniles de corvina a lo largo de diferentes años, permitiendo observar la variabilidad interanual en la zona de estudio. En el año 2025 se aprecia una concentración de valores relativamente bajos del índice, distribuidos principalmente hacia el norte del área, lo que sugiere una menor presencia o dispersión de juveniles en comparación con años anteriores, particularmente respecto a los picos localizados observados en 2017 y 2019.
+
+Los próximos pasos del análisis consistirán en evaluar los parámetros ambientales, especialmente la temperatura y la salinidad de fondo, con el objetivo de determinar si las variaciones observadas en la distribución del índice durante 2025 se relacionan o no con las tendencias previamente evidenciadas en el análisis de correlación.
+
+d - Analisis gráfico temporal/Espacial de las mediciones de temperatura de fondo (TF)
+
+```{r}
+
+ggplot() +
+  geom_polygon(data = world, aes(x = long, y = lat, group = group),
+               fill = "gray90", colour = "gray70") +
+  geom_point(data = dm,
+             aes(x = lon, y = lat,
+                 colour = tf,
+                 size   = tf),      # tamaño mapeado estéticamente
+             alpha = 0.8) +        # leve transparencia para mejor lectura
+  scale_color_viridis_c(name = "tf (color)") +
+  scale_size_continuous(name = "tf (tamaño)",
+                        range = c(1, 6)) +   # control del rango visual
+  coord_quickmap(xlim = xlim, ylim = ylim, expand = FALSE) +
+  facet_wrap(~ anio) +
+  labs(title = "Distribución de la temperatura de fondo por año",
+       x = "Longitud", y = "Latitud") +
+  theme_minimal() +
+  theme(
+    legend.position = "right",
+    strip.text = element_text(face = "bold")
+  )
+
+```
+
+El gráfico presenta la distribución espacial y temporal de la temperatura de fondo (TF) entre 2016 y 2025. Se observa una notable variabilidad interanual, con valores más elevados en 2017 y una tendencia general hacia temperaturas más moderadas en los años posteriores. En 2025, las temperaturas registradas muestran un patrón más heterogéneo, con sectores costeros de valores intermedios y algunos puntos localizados con temperaturas algo mayores. Esta distribución no evidencia, a simple vista, una relación directa con el patrón de abundancia observado en el índice de juveniles, aunque la heterogeneidad térmica podría influir en la dispersión espacial de los mismos.
+
+e- Analisis gráfico temporal/Espacial de las mediciones de salinidad de fondo (SF)
+
+```{r}
+
+ggplot() +
+  geom_polygon(data = world, aes(x = long, y = lat, group = group),
+               fill = "gray90", colour = "gray70") +
+  geom_point(data = dm,
+             aes(x = lon, y = lat,
+                 colour = sf,
+                 size   = sf),      # tamaño mapeado estéticamente
+             alpha = 0.8) +        # leve transparencia para mejor lectura
+  scale_color_viridis_c(name = "sf (color)") +
+  scale_size_continuous(name = "sf (tamaño)",
+                        range = c(1, 6)) +   # control del rango visual
+  coord_quickmap(xlim = xlim, ylim = ylim, expand = FALSE) +
+  facet_wrap(~ anio) +
+  labs(title = "Distribución de los valores de salinidad de fondo por año",
+       x = "Longitud", y = "Latitud") +
+  theme_minimal() +
+  theme(
+    legend.position = "right",
+    strip.text = element_text(face = "bold")
+  )
 
 
 ```
+
+El gráfico muestra la distribución espacial y temporal de la salinidad de fondo (SF) entre los años 2016 y 2025. A lo largo del período analizado, se observa una variabilidad moderada, con valores más elevados hacia las zonas costeras en algunos años puntuales, especialmente en 2017 y 2023. En 2025, los valores de salinidad presentan un rango intermedio, con cierta homogeneidad espacial y sin gradientes marcados. Esta estabilidad relativa podría estar indicando una menor influencia de los aportes continentales o de procesos de mezcla vertical durante ese año.
+
+***Conclusión***
+
+El análisis conjunto de la distribución espacial del índice de abundancia de juveniles, la temperatura y la salinidad de fondo entre 2016 y 2025 sugiere que, al menos en el período considerado, no se evidencia una relación directa ni consistente entre las variables ambientales y la abundancia de juveniles. Si bien en 2025 se registró una disminución y dispersión del índice de abundancia, las condiciones de temperatura y salinidad no mostraron variaciones extremas o patrones espaciales que pudieran explicar de manera evidente dicha dinámica. Esto podría interpretarse como un indicio de que los factores ambientales analizados no son determinantes principales de la variabilidad observada en la abundancia juvenil o, alternativamente, que las relaciones entre estas variables son no lineales o están mediadas por otros factores biológicos y oceanográficos no contemplados en el presente estudio.
+
+Sin embargo, esta interpretación debe considerarse provisional: la ausencia de correlación estadística no equivale necesariamente a la ausencia de relación ecológica. Las interacciones entre los procesos físicos del ambiente y la dinámica poblacional pueden ser complejas, estar sujetas a rezagos temporales o depender de umbrales críticos que los análisis lineales no logran capturar. En consecuencia, los resultados obtenidos deben entenderse como un punto de partida para un análisis más amplio, orientado a integrar nuevas variables, series temporales extendidas y modelos de mayor complejidad.
+
+***Discusión***
+
+Un enfoque escéptico y crítico invita a cuestionar algunos de los supuestos implícitos en este análisis. En primer lugar, se asume que la temperatura y la salinidad de fondo son los principales controladores ambientales de la distribución juvenil, lo cual puede ser una simplificación excesiva. Otros factores como la disponibilidad de alimento, la estructura del hábitat, la presión de depredación o los procesos de transporte larval podrían ejercer una influencia significativa y, de hecho, enmascarar o modular los efectos térmicos y salinos.
+
+En segundo término, la correlación lineal empleada puede resultar insuficiente para describir procesos ecológicos complejos. La falta de correlación detectada no refuta la existencia de relaciones no lineales, interacciones cruzadas o respuestas umbral. Por ejemplo, la abundancia juvenil podría verse afectada sólo cuando la temperatura o la salinidad superan ciertos límites fisiológicos, o bien cuando se combinan con condiciones tróficas particulares.
+
+En síntesis, si bien los datos actuales no sustentan una relación fuerte entre la abundancia de juveniles y las variables ambientales analizadas, el resultado no debe entenderse como una conclusión definitiva, sino como una invitación a revisar los modelos conceptuales empleados, ampliar el rango de variables incorporadas y considerar la posibilidad de interacciones más complejas que trasciendan la linealidad estadística.
